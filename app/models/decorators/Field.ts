@@ -9,7 +9,7 @@ const fields = new Map<string, (string | number | symbol)[]>();
  * @returns the keys decorated with @Field.
  */
 export const getFieldsForModel = <T extends Model>(target: T) =>
-  getFieldsForModelClass(target.constructor);
+  getFieldsForModelClass(target.constructor as typeof Model);
 
 /**
  * Returns the keys recorded as serializable fields on a model class.
@@ -17,8 +17,10 @@ export const getFieldsForModel = <T extends Model>(target: T) =>
  * @param model the model class to inspect.
  * @returns the keys decorated with @Field.
  */
-export function getFieldsForModelClass(model: { name: string }) {
-  return fields.get(model.name) ?? [];
+export function getFieldsForModelClass(model: { modelName: string }) {
+  // Keyed by modelName rather than the constructor name, which is not
+  // unique once class names are minified in production builds.
+  return fields.get(model.modelName) ?? [];
 }
 
 /**
@@ -29,7 +31,7 @@ export function getFieldsForModelClass(model: { name: string }) {
  * @param propertyKey the key to record as a field.
  */
 const Field = (target: Model, propertyKey: string | symbol) => {
-  const className = target.constructor.name;
+  const className = (target.constructor as typeof Model).modelName;
   fields.set(className, [...(fields.get(className) ?? []), propertyKey]);
 };
 
